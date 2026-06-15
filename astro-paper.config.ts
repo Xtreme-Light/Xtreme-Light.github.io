@@ -2,7 +2,7 @@ import { defineAstroPaperConfig } from "./src/types/config";
 
 export default defineAstroPaperConfig({
   site: {
-    url: "https://xtreme-light.github.io/",
+    url: "https://blog.light17.ccwu.cc/",
     title: "Xtreme Light",
     description: "个人技术博客，记录编程、折腾与思考。",
     author: "Xtreme Light",
