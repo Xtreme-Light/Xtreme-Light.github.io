@@ -19,6 +19,58 @@ interface SiteConfig {
   dir?: "ltr" | "rtl" | "auto";
   /** Google Search Console verification meta tag value */
   googleVerification?: string;
+  /** Baidu Webmaster (baidu-site-verification) meta tag value */
+  baiduVerification?: string;
+}
+
+/**
+ * Comment system configuration. Currently only Giscus is supported, which
+ * stores comments as GitHub Discussions (or Issues) and uses GitHub OAuth
+ * for sign-in.
+ */
+interface CommentsConfig {
+  /** Provider. Set to false / omit to disable comments. */
+  provider?: "giscus" | false;
+  /** Giscus options. Get them from https://giscus.app/. */
+  giscus?: {
+    /** GitHub repo, e.g. "user/repo". */
+    repo: `${string}/${string}`;
+    /** Repo id from giscus configurator. */
+    repoId: string;
+    /** Discussion category name, e.g. "Announcements". */
+    category: string;
+    /** Category id from giscus configurator. */
+    categoryId: string;
+    /** Mapping strategy. Defaults to "pathname". */
+    mapping?:
+      | "pathname"
+      | "url"
+      | "title"
+      | "og:title"
+      | "specific"
+      | "number";
+    /** Enable reactions on the main post. Defaults to true. */
+    reactionsEnabled?: boolean;
+    /** Emit metadata events. Defaults to false. */
+    emitMetadata?: boolean;
+    /** "top" or "bottom". Defaults to "bottom". */
+    inputPosition?: "top" | "bottom";
+    /** Language. Defaults to the site `lang`. */
+    lang?: string;
+    /** Load comments lazily on scroll. Defaults to true. */
+    loading?: "lazy" | "eager";
+  };
+}
+
+/**
+ * Visitor analytics configuration. All fields are optional; scripts are
+ * only injected when a value is provided.
+ */
+interface AnalyticsConfig {
+  /** Google Analytics 4 measurement id, e.g. "G-XXXXXXXXXX". */
+  googleAnalyticsId?: string;
+  /** Baidu Tongji site id (the part after "hm.js?"). */
+  baiduTongjiId?: string;
 }
 
 interface PostsConfig {
@@ -100,6 +152,10 @@ interface AstroPaperConfig {
   socials?: SocialLink[];
   /** Share links shown on post detail pages */
   shareLinks?: ShareLink[];
+  /** Comment system configuration */
+  comments?: CommentsConfig;
+  /** Visitor analytics configuration */
+  analytics?: AnalyticsConfig;
 }
 
 type ResolvedSiteConfig = Required<
@@ -115,7 +171,7 @@ type ResolvedSiteConfig = Required<
     | "ogImage"
   >
 > &
-  Pick<SiteConfig, "profile" | "googleVerification">;
+  Pick<SiteConfig, "profile" | "googleVerification" | "baiduVerification">;
 
 export interface ResolvedAstroPaperConfig {
   site: ResolvedSiteConfig;
@@ -123,6 +179,8 @@ export interface ResolvedAstroPaperConfig {
   features: Required<FeaturesConfig>;
   socials: SocialLink[];
   shareLinks: ShareLink[];
+  comments: CommentsConfig;
+  analytics: AnalyticsConfig;
 }
 
 /**

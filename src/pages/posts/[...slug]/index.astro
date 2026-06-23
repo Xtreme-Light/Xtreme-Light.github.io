@@ -14,6 +14,7 @@ import ShareLinks from "./_components/ShareLinks.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
+import Giscus from "@/components/Giscus.astro";
 import config from "@/config";
 
 export async function getStaticPaths() {
@@ -158,6 +159,8 @@ const ogImage = ogImageUrl
     <hr class="my-8 border-dashed" />
 
     <AdjacentPostNav {prevPost} {nextPost} />
+
+    <Giscus />
   </main>
   <Footer />
 </PostLayout>

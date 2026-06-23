@@ -6,7 +6,12 @@
  */
 import userConfig from "@/astro-paper.config";
 import type { ResolvedAstroPaperConfig } from "./types/config";
-import { PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
+import {
+  PUBLIC_BAIDU_SITE_VERIFICATION,
+  PUBLIC_BAIDU_TONGJI_ID,
+  PUBLIC_GOOGLE_ANALYTICS_ID,
+  PUBLIC_GOOGLE_SITE_VERIFICATION,
+} from "astro:env/client";
 
 const DEFAULT_OG_IMAGE = "default-og.jpg";
 
@@ -19,6 +24,8 @@ const config: ResolvedAstroPaperConfig = {
     dir: userConfig.site.dir ?? "ltr",
     googleVerification:
       userConfig.site.googleVerification || PUBLIC_GOOGLE_SITE_VERIFICATION,
+    baiduVerification:
+      userConfig.site.baiduVerification || PUBLIC_BAIDU_SITE_VERIFICATION,
   },
   posts: {
     perPage: userConfig.posts?.perPage ?? 4,
@@ -36,6 +43,13 @@ const config: ResolvedAstroPaperConfig = {
   },
   socials: userConfig.socials ?? [],
   shareLinks: userConfig.shareLinks ?? [],
+  comments: userConfig.comments ?? {},
+  analytics: {
+    googleAnalyticsId:
+      userConfig.analytics?.googleAnalyticsId || PUBLIC_GOOGLE_ANALYTICS_ID,
+    baiduTongjiId:
+      userConfig.analytics?.baiduTongjiId || PUBLIC_BAIDU_TONGJI_ID,
+  },
 };
 
 export default config;

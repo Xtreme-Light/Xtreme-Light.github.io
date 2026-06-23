@@ -1,0 +1,108 @@
+---
+/**
+ * Giscus 评论区。
+ *
+ * - 使用 GitHub OAuth 登录，评论存储于 GitHub Discussions。
+ * - 主题随站点的 light/dark 切换；首屏与 Astro view transition 切页后均会同步。
+ * - 仅当 config.comments.provider === "giscus" 且 giscus 配置完整时渲染。
+ */
+import config from "@/config";
+
+const { comments, site } = config;
+const giscus = comments.provider === "giscus" ? comments.giscus : undefined;
+
+const isConfigured =
+  !!giscus &&
+  !!giscus.repo &&
+  !!giscus.repoId &&
+  !!giscus.category &&
+  !!giscus.categoryId;
+---
+
+{
+  isConfigured && giscus && (
+    <section
+      id="comments"
+      aria-label="评论"
+      class="mx-auto mt-12 w-full max-w-app"
+    >
+      <h2 class="mb-4 text-xl font-semibold">评论</h2>
+      <div id="giscus-container" />
+      <script
+        is:inline
+        define:vars={{
+          repo: giscus.repo,
+          repoId: giscus.repoId,
+          category: giscus.category,
+          categoryId: giscus.categoryId,
+          mapping: giscus.mapping ?? "pathname",
+          reactionsEnabled: (giscus.reactionsEnabled ?? true) ? "1" : "0",
+          emitMetadata: (giscus.emitMetadata ?? false) ? "1" : "0",
+          inputPosition: giscus.inputPosition ?? "bottom",
+          giscusLang: giscus.lang ?? site.lang,
+          loading: giscus.loading ?? "lazy",
+        }}
+      >
+        {`
+          (function () {
+            function currentTheme() {
+              return document.documentElement.classList.contains("dark")
+                ? "dark"
+                : "light";
+            }
+
+            function mountGiscus() {
+              var container = document.getElementById("giscus-container");
+              if (!container) return;
+              container.innerHTML = "";
+
+              var script = document.createElement("script");
+              script.src = "https://giscus.app/client.js";
+              script.async = true;
+              script.crossOrigin = "anonymous";
+              script.setAttribute("data-repo", repo);
+              script.setAttribute("data-repo-id", repoId);
+              script.setAttribute("data-category", category);
+              script.setAttribute("data-category-id", categoryId);
+              script.setAttribute("data-mapping", mapping);
+              script.setAttribute("data-strict", "0");
+              script.setAttribute("data-reactions-enabled", reactionsEnabled);
+              script.setAttribute("data-emit-metadata", emitMetadata);
+              script.setAttribute("data-input-position", inputPosition);
+              script.setAttribute("data-theme", currentTheme());
+              script.setAttribute("data-lang", giscusLang);
+              script.setAttribute("data-loading", loading);
+              container.appendChild(script);
+            }
+
+            function postThemeMessage() {
+              var iframe = document.querySelector(
+                "iframe.giscus-frame"
+              );
+              if (!iframe) return;
+              iframe.contentWindow &&
+                iframe.contentWindow.postMessage(
+                  { giscus: { setConfig: { theme: currentTheme() } } },
+                  "https://giscus.app"
+                );
+            }
+
+            mountGiscus();
+
+            // 监听主题切换（theme.ts 通过 dataset/class 改变 <html>）。
+            if (!window.__giscusThemeObserver) {
+              var observer = new MutationObserver(function () {
+                postThemeMessage();
+              });
+              observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["class", "data-theme"],
+              });
+              window.__giscusThemeObserver = observer;
+            }
+          })();
+        `}
+      </script>
+    </section>
+  )
+}

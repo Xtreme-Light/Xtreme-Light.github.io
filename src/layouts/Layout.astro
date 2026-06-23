@@ -88,6 +88,74 @@ const rssHref = getRelativeLocaleUrl(
       )
     }
 
+    {
+      site.baiduVerification && (
+        <meta
+          name="baidu-site-verification"
+          content={site.baiduVerification}
+        />
+      )
+    }
+
+    {
+      /* Google Analytics 4 */
+      config.analytics.googleAnalyticsId && (
+        <>
+          <script
+            is:inline
+            async
+            src={`https://www.googletagmanager.com/gtag/js?id=${config.analytics.googleAnalyticsId}`}
+          />
+          <script
+            is:inline
+            define:vars={{ gaId: config.analytics.googleAnalyticsId }}
+          >
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              window.gtag = gtag;
+              gtag("js", new Date());
+              gtag("config", gaId, { send_page_view: false });
+
+              function sendPageView() {
+                gtag("event", "page_view", {
+                  page_path: location.pathname + location.search,
+                  page_location: location.href,
+                  page_title: document.title,
+                });
+              }
+              sendPageView();
+              document.addEventListener("astro:page-load", sendPageView);
+            `}
+          </script>
+        </>
+      )
+    }
+
+    {
+      /* 百度统计 */
+      config.analytics.baiduTongjiId && (
+        <script
+          is:inline
+          define:vars={{ hmId: config.analytics.baiduTongjiId }}
+        >
+          {`
+            var _hmt = window._hmt = window._hmt || [];
+            (function() {
+              var hm = document.createElement("script");
+              hm.src = "https://hm.baidu.com/hm.js?" + hmId;
+              hm.async = true;
+              var s = document.getElementsByTagName("script")[0];
+              s.parentNode.insertBefore(hm, s);
+            })();
+            document.addEventListener("astro:page-load", function () {
+              _hmt.push(["_trackPageview", location.pathname + location.search]);
+            });
+          `}
+        </script>
+      )
+    }
+
     <!--
       Inline FOUC-prevention script: sets data-theme on <html> before
       the browser paints. Runs synchronously, no defer/async.
