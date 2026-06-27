@@ -68,7 +68,7 @@ export default defineAstroPaperConfig({
       reactionsEnabled: true,
       inputPosition: "bottom",
       lang: "zh-CN",
-      loading: "eager",
+      loading: "lazy",
     },
   },
   /**
