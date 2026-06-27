@@ -26,6 +26,9 @@ pnpm-debug.log*
 # pagefind
 public/pagefind
 
+# 草稿目录（保留 README.md，忽略其他草稿文件）
+src/content/posts/_drafts/*
+!src/content/posts/_drafts/README.md
 # pnpm
 .pnpm-store
 
