@@ -1,0 +1,81 @@
+---
+/**
+ * 文章目录组件。
+ *
+ * 在客户端扫描文章中的 h2/h3 标题，生成可点击的目录导航。
+ * 支持平滑滚动和当前章节高亮。
+ */
+---
+
+<nav
+  id="toc"
+  class="mb-8 rounded-lg border border-border bg-muted/50 p-4"
+  aria-label="文章目录"
+>
+  <h3 class="mb-3 font-semibold text-accent">目录</h3>
+  <ul id="toc-list" class="space-y-1 text-sm" />
+</nav>
+
+<script is:inline>
+  (function () {
+    function createToc() {
+      const article = document.getElementById("article");
+      const tocList = document.getElementById("toc-list");
+      if (!article || !tocList) return;
+
+      const headings = article.querySelectorAll("h2, h3");
+      if (headings.length === 0) {
+        document.getElementById("toc").remove();
+        return;
+      }
+
+      let tocHtml = "";
+      headings.forEach((heading) => {
+        const level = parseInt(heading.tagName.charAt(1));
+        const id = heading.id || heading.textContent.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-");
+        if (!heading.id) heading.id = id;
+        const title = heading.textContent.trim();
+        const indent = level === 3 ? "pl-4" : "";
+        tocHtml += `<li class="${indent}"><a href="#${id}" class="toc-link hover:text-accent transition-colors">${title}</a></li>`;
+      });
+      tocList.innerHTML = tocHtml;
+
+      function highlightActiveSection() {
+        const scrollPosition = window.scrollY + 100;
+        let activeId = "";
+
+        headings.forEach((heading) => {
+          const offset = heading.offsetTop;
+          if (scrollPosition >= offset) {
+            activeId = heading.id;
+          }
+        });
+
+        document.querySelectorAll(".toc-link").forEach((link) => {
+          link.classList.toggle("font-semibold", link.getAttribute("href") === `#${activeId}`);
+          link.classList.toggle("text-accent", link.getAttribute("href") === `#${activeId}`);
+        });
+      }
+
+      window.addEventListener("scroll", highlightActiveSection, { passive: true });
+      highlightActiveSection();
+
+      document.querySelectorAll(".toc-link").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const targetId = link.getAttribute("href").substring(1);
+          const target = document.getElementById(targetId);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", createToc);
+    } else {
+      createToc();
+    }
+  })();
+</script>
