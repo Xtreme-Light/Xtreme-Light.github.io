@@ -16,7 +16,7 @@
     <span class="w-1 h-4 rounded-full bg-accent"></span>
     目录
   </h3>
-  <ul id="toc-list" class="space-y-1.5 text-sm" />
+  <ul id="toc-list" class="space-y-1.5 text-sm"></ul>
 </nav>
 
 <nav
@@ -36,7 +36,7 @@
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5"
+        class="h-5 w-5 toc-toggle-icon"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -50,124 +50,128 @@
       </svg>
     </button>
   </div>
-  <ul id="toc-list-mobile" class="mt-3 space-y-1.5 text-sm overflow-hidden" />
+  <ul id="toc-list-mobile" class="mt-3 space-y-1.5 text-sm overflow-hidden"></ul>
 </nav>
 
 <script is:inline>
-  (function () {
-    function createToc() {
-      const article = document.getElementById("article");
-      const tocList = document.getElementById("toc-list");
-      const tocListMobile = document.getElementById("toc-list-mobile");
-      const toc = document.getElementById("toc");
-      const tocMobile = document.getElementById("toc-mobile");
+  function createToc() {
+    var article = document.getElementById("article");
+    var tocList = document.getElementById("toc-list");
+    var tocListMobile = document.getElementById("toc-list-mobile");
+    var toc = document.getElementById("toc");
+    var tocMobile = document.getElementById("toc-mobile");
 
-      if (!article || !tocList || !toc) return;
+    if (!article || !tocList || !toc) return;
 
-      const headings = article.querySelectorAll("h2, h3");
-      if (headings.length === 0) {
-        toc.remove();
-        if (tocMobile) tocMobile.remove();
-        return;
-      }
+    var headings = article.querySelectorAll("h2, h3");
+    if (headings.length === 0) {
+      if (toc) toc.style.display = "none";
+      if (tocMobile) tocMobile.style.display = "none";
+      return;
+    }
 
-      function buildTocHtml() {
-        let html = "";
-        headings.forEach((heading) => {
-          const level = parseInt(heading.tagName.charAt(1));
-          const id =
-            heading.id ||
-            heading.textContent
-              .trim()
-              .toLowerCase()
-              .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-");
-          if (!heading.id) heading.id = id;
-          const title = heading.textContent.trim();
-          const indent = level === 3 ? "pl-3 text-muted-foreground/80" : "";
-          html += `<li class="${indent}"><a href="#${id}" class="toc-link block py-1 px-2 rounded hover:bg-muted/50 hover:text-accent transition-all duration-200">${title}</a></li>`;
-        });
-        return html;
-      }
+    function buildTocHtml() {
+      var html = "";
+      headings.forEach(function (heading) {
+        var level = parseInt(heading.tagName.charAt(1));
+        var id = heading.id || heading.textContent
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-");
+        if (!heading.id) heading.id = id;
+        var title = heading.textContent.trim();
+        var indent = level === 3 ? "pl-3 text-muted-foreground/80" : "";
+        html += '<li class="' + indent + '"><a href="#' + id + '" class="toc-link block py-1 px-2 rounded hover:bg-muted/50 hover:text-accent transition-all duration-200">' + title + "</a></li>";
+      });
+      return html;
+    }
 
-      const tocHtml = buildTocHtml();
-      tocList.innerHTML = tocHtml;
-      if (tocListMobile) tocListMobile.innerHTML = tocHtml;
+    var tocHtml = buildTocHtml();
+    tocList.innerHTML = tocHtml;
+    if (tocListMobile) tocListMobile.innerHTML = tocHtml;
 
-      const tocLinks = document.querySelectorAll(".toc-link");
+    var tocLinks = document.querySelectorAll(".toc-link");
 
-      function highlightActiveSection() {
-        const scrollPosition = window.scrollY + 120;
-        let activeId = "";
+    function highlightActiveSection() {
+      var scrollPosition = window.scrollY + 120;
+      var activeId = "";
 
-        headings.forEach((heading) => {
-          const offset = heading.offsetTop;
-          if (scrollPosition >= offset) {
-            activeId = heading.id;
-          }
-        });
+      headings.forEach(function (heading) {
+        var offset = heading.offsetTop;
+        if (scrollPosition >= offset) {
+          activeId = heading.id;
+        }
+      });
 
-        tocLinks.forEach((link) => {
-          const isActive = link.getAttribute("href") === `#${activeId}`;
-          link.classList.toggle("font-semibold", isActive);
-          link.classList.toggle("text-accent", isActive);
-          link.classList.toggle("bg-muted/50", isActive);
-        });
+      tocLinks.forEach(function (link) {
+        var isActive = link.getAttribute("href") === "#" + activeId;
+        link.classList.toggle("font-semibold", isActive);
+        link.classList.toggle("text-accent", isActive);
+        link.classList.toggle("bg-muted/50", isActive);
+      });
 
-        const activeLink = document.querySelector(".toc-link.text-accent");
-        if (activeLink && toc) {
-          const tocRect = toc.getBoundingClientRect();
-          const linkRect = activeLink.getBoundingClientRect();
-          const offsetTop = activeLink.offsetTop;
+      var activeLink = document.querySelector(".toc-link.text-accent");
+      if (activeLink && toc) {
+        var tocRect = toc.getBoundingClientRect();
+        var linkRect = activeLink.getBoundingClientRect();
+        var offsetTop = activeLink.offsetTop;
 
-          if (linkRect.top < tocRect.top + 60) {
-            toc.scrollTo({ top: offsetTop - 60, behavior: "smooth" });
-          } else if (linkRect.bottom > tocRect.bottom - 20) {
-            toc.scrollTo({
-              top: offsetTop + linkRect.height - tocRect.height + 60,
-              behavior: "smooth",
-            });
-          }
+        if (linkRect.top < tocRect.top + 60) {
+          toc.scrollTo({ top: offsetTop - 60, behavior: "smooth" });
+        } else if (linkRect.bottom > tocRect.bottom - 20) {
+          toc.scrollTo({
+            top: offsetTop + linkRect.height - tocRect.height + 60,
+            behavior: "smooth",
+          });
         }
       }
-
-      window.addEventListener("scroll", highlightActiveSection, {
-        passive: true,
-      });
-      highlightActiveSection();
-
-      tocLinks.forEach((link) => {
-        link.addEventListener("click", (e) => {
-          e.preventDefault();
-          const targetId = link.getAttribute("href").substring(1);
-          const target = document.getElementById(targetId);
-          if (target) {
-            const offsetTop = target.offsetTop - 80;
-            window.scrollTo({ top: offsetTop, behavior: "smooth" });
-          }
-        });
-      });
-
-      const tocToggle = document.getElementById("toc-toggle");
-      const tocListMobileEl = document.getElementById("toc-list-mobile");
-      if (tocToggle && tocListMobileEl) {
-        let isExpanded = true;
-        tocToggle.addEventListener("click", () => {
-          isExpanded = !isExpanded;
-          tocListMobileEl.classList.toggle("max-h-96", isExpanded);
-          tocListMobileEl.classList.toggle("max-h-0", !isExpanded);
-          const svg = tocToggle.querySelector("svg");
-          if (svg) {
-            svg.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-          }
-        });
-        tocListMobileEl.classList.add("max-h-96");
-      }
     }
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", createToc);
-    } else {
-      createToc();
+    // 移除旧的 scroll 监听器（view transition 导航时避免重复绑定）
+    if (window.__tocScrollHandler) {
+      window.removeEventListener("scroll", window.__tocScrollHandler);
     }
-  })();
+    window.__tocScrollHandler = highlightActiveSection;
+    window.addEventListener("scroll", highlightActiveSection, {
+      passive: true,
+    });
+    highlightActiveSection();
+
+    tocLinks.forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        var targetId = link.getAttribute("href").substring(1);
+        var target = document.getElementById(targetId);
+        if (target) {
+          var offsetTop = target.offsetTop - 80;
+          window.scrollTo({ top: offsetTop, behavior: "smooth" });
+        }
+      });
+    });
+
+    var tocToggle = document.getElementById("toc-toggle");
+    var tocListMobileEl = document.getElementById("toc-list-mobile");
+    if (tocToggle && tocListMobileEl) {
+      var isExpanded = true;
+      tocToggle.onclick = function () {
+        isExpanded = !isExpanded;
+        tocListMobileEl.classList.toggle("max-h-96", isExpanded);
+        tocListMobileEl.classList.toggle("max-h-0", !isExpanded);
+        var svg = tocToggle.querySelector(".toc-toggle-icon");
+        if (svg) {
+          svg.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
+        }
+      };
+      tocListMobileEl.classList.add("max-h-96");
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", createToc);
+  } else {
+    createToc();
+  }
+
+  // view transition 导航后重新生成目录
+  document.addEventListener("astro:after-swap", createToc);
 </script>
