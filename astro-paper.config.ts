@@ -61,9 +61,9 @@ export default defineAstroPaperConfig({
     provider: "giscus",
     giscus: {
       repo: "Xtreme-Light/Xtreme-Light.github.io",
-      repoId: "",
+      repoId: "R_kgDOS7VgtQ",
       category: "Announcements",
-      categoryId: "",
+      categoryId: "DIC_kwDOS7Vgtc4DAAKg",
       mapping: "pathname",
       reactionsEnabled: true,
       inputPosition: "bottom",
