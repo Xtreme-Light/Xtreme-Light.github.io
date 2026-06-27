@@ -26,9 +26,10 @@ pnpm-debug.log*
 # pagefind
 public/pagefind
 
-# 草稿目录（保留 README.md，忽略其他草稿文件）
+# 草稿目录（保留 _README.md，忽略其他草稿文件）
+# _README.md 以 _ 开头，不会被 content loader 的 [^_]* 模式扫描
 src/content/posts/_drafts/*
-!src/content/posts/_drafts/README.md
+!src/content/posts/_drafts/_README.md
 # pnpm
 .pnpm-store
 
