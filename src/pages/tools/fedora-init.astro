@@ -1,0 +1,482 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import { MODULES, COMMON_HEADER } from "@/data/fedora-init-scripts";
+
+const pageTitle = "Fedora 初始化脚本生成器";
+const pageDesc =
+  "按需勾选功能模块，自动补充依赖并实时生成可一键执行的 Fedora 初始化脚本。";
+
+const CATEGORIES = [
+  { id: "system", name: "系统配置" },
+  { id: "devtools", name: "开发工具" },
+  { id: "apps", name: "桌面应用" },
+  { id: "keyd", name: "键盘映射" },
+  { id: "env", name: "环境变量" },
+] as const;
+
+const modulesByCategory = CATEGORIES.map(cat => ({
+  ...cat,
+  modules: MODULES.filter(m => m.category === cat.id),
+}));
+
+const moduleNameMap = Object.fromEntries(MODULES.map(m => [m.id, m.name]));
+
+// Inline SVG icons (stroke = currentColor, adapt to theme).
+const ICONS: Record<string, string> = {
+  system: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  devtools: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  apps: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>`,
+  keyd: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg>`,
+  env: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>`,
+};
+
+// Safe JSON: escape < > & so the inline data scripts can't break out via
+// `</script>` and don't get mangled by HTML entity parsing.
+const safeJson = (v: unknown) =>
+  JSON.stringify(v)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+
+const modulesJson = safeJson(MODULES);
+const headerJson = safeJson(COMMON_HEADER);
+
+const btnBase =
+  "px-3 py-1.5 text-sm rounded-md border border-border transition-colors focus-outline";
+const btnSecondary = `${btnBase} hover:bg-muted`;
+const btnPrimary = `${btnBase} bg-accent text-accent-foreground border-accent hover:opacity-90`;
+---
+
+<Layout title={`${pageTitle} | ${config.site.title}`} description={pageDesc}>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={pageTitle} pageDesc={pageDesc}>
+    <script
+      is:inline
+      type="application/json"
+      id="fedora-modules-data"
+      set:html={modulesJson}></script>
+    <script
+      is:inline
+      type="application/json"
+      id="fedora-header-data"
+      set:html={headerJson}></script>
+
+    <div id="fedora-tool" class="space-y-4">
+      {/* 快捷按钮区 */}
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-muted-foreground mr-1 text-sm">快捷：</span>
+        <button type="button" data-action="recommend" class={btnPrimary}>
+          推荐配置
+        </button>
+        <button type="button" data-action="select-all" class={btnSecondary}>
+          全选
+        </button>
+        <button type="button" data-action="clear" class={btnSecondary}>
+          清空
+        </button>
+        <span
+          id="selected-count"
+          class="text-muted-foreground ml-auto text-sm"></span>
+      </div>
+
+      {/* 依赖提示 */}
+      <div
+        id="dep-message"
+        class="hidden rounded-md border border-accent/40 bg-accent/10 p-3 text-sm">
+      </div>
+
+      {/* 主体：左模块选择 + 右脚本预览 */}
+      <div class="grid gap-6 lg:grid-cols-2">
+        {/* 左侧：模块选择区 */}
+        <div class="space-y-6">
+          {
+            modulesByCategory.map(cat => (
+              <section class="space-y-2">
+                <h2 class="flex items-center gap-2 text-lg font-semibold">
+                  <span class="text-accent" set:html={ICONS[cat.id]} />
+                  {cat.name}
+                  <span class="text-muted-foreground text-sm font-normal">
+                    ({cat.modules.length})
+                  </span>
+                </h2>
+                <div class="space-y-2">
+                  {cat.modules.map(m => (
+                    <label
+                      data-module-card
+                      class={`flex cursor-pointer gap-3 rounded-lg border border-border bg-muted/30 p-3 transition-colors hover:border-accent/50 ${m.deps.length > 0 ? "flex-col" : ""}`}
+                    >
+                      <div class="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          data-module-id={m.id}
+                          class="mt-0.5 size-4 shrink-0 accent-accent"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <div class="font-medium leading-tight">{m.name}</div>
+                          <div class="text-muted-foreground mt-0.5 text-sm">
+                            {m.description}
+                          </div>
+                        </div>
+                      </div>
+                      {m.deps.length > 0 && (
+                        <div class="text-muted-foreground pl-7 text-xs">
+                          依赖：{m.deps.map(d => moduleNameMap[d] ?? d).join("、")}
+                        </div>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </section>
+            ))
+          }
+        </div>
+
+        {/* 右侧：脚本预览区 */}
+        <div class="self-start lg:sticky lg:top-4">
+          <div class="overflow-hidden rounded-lg border border-border">
+            <div
+              class="bg-muted/60 flex items-center justify-between border-b border-border px-3 py-2"
+            >
+              <span class="text-sm font-medium">脚本预览</span>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  data-action="copy"
+                  class={btnSecondary}
+                >
+                  复制
+                </button>
+                <button
+                  type="button"
+                  data-action="download"
+                  class={btnSecondary}
+                >
+                  下载
+                </button>
+              </div>
+            </div>
+            <pre
+              id="script-preview"
+              class="bg-muted/30 max-h-[70vh] overflow-auto p-4 text-xs leading-relaxed whitespace-pre"
+            ></pre>
+          </div>
+        </div>
+      </div>
+
+      {/* 使用说明 */}
+      <section
+        class="border-border bg-muted/20 mt-2 rounded-lg border p-4 text-sm"
+      >
+        <h2 class="mb-2 font-semibold">使用说明</h2>
+        <ol class="text-muted-foreground list-decimal space-y-1 pl-5">
+          <li>在左侧按需勾选功能模块，右侧会实时生成脚本。</li>
+          <li>
+            依赖模块会自动补充并提示（如勾选 Tauri CLI 会自动补充 Rust）。
+          </li>
+          <li>点击「复制」或「下载」获取脚本，文件名默认为 <code>fedora-init.sh</code>。</li>
+          <li>
+            在 Fedora 终端执行：
+            <code class="bg-background mx-1 rounded px-1.5 py-0.5"
+              >chmod +x fedora-init.sh &amp;&amp; ./fedora-init.sh</code
+            >
+          </li>
+          <li>脚本需要 sudo 权限，会自动测试镜像源与 GitHub 代理延迟。</li>
+          <li>执行完成后运行 <code class="bg-background mx-1 rounded px-1.5 py-0.5">source ~/.bashrc</code> 使环境变量生效。</li>
+        </ol>
+      </section>
+    </div>
+
+    {/* Toast */}
+    <div
+      id="fedora-toast"
+      class="bg-accent text-accent-foreground pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 translate-y-2 rounded-md px-4 py-2 text-sm opacity-0 shadow-lg transition-all"
+    >
+    </div>
+  </Main>
+
+  <Footer />
+</Layout>
+
+<script is:inline>
+  (function () {
+    function init() {
+      var tool = document.getElementById("fedora-tool");
+      if (!tool || tool.dataset.init === "1") return;
+      tool.dataset.init = "1";
+
+      var modulesEl = document.getElementById("fedora-modules-data");
+      var headerEl = document.getElementById("fedora-header-data");
+      if (!modulesEl || !headerEl) return;
+
+      var modules = JSON.parse(modulesEl.textContent || "[]");
+      var commonHeader = JSON.parse(headerEl.textContent || "");
+
+      var CATEGORY_ORDER = ["system", "devtools", "apps", "keyd", "env"];
+      var RECOMMENDED = [
+        "system-mirror", "system-dnfconf", "system-rpmfusion", "system-update",
+        "system-basepkgs", "system-ssh", "devtools-rust", "devtools-pip",
+        "devtools-nvm-node", "devtools-starship", "env-shell", "env-clean",
+        "env-verify"
+      ];
+
+      var moduleMap = {};
+      modules.forEach(function (m) { moduleMap[m.id] = m; });
+
+      var preview = document.getElementById("script-preview");
+      var depMsg = document.getElementById("dep-message");
+      var countEl = document.getElementById("selected-count");
+      var toast = document.getElementById("fedora-toast");
+      var rawScript = "";
+      var toastTimer = null;
+
+      function getChecked() {
+        var els = tool.querySelectorAll("input[data-module-id]:checked");
+        var ids = [];
+        for (var i = 0; i < els.length; i++) {
+          ids.push(els[i].getAttribute("data-module-id"));
+        }
+        return ids;
+      }
+
+      // 递归补充依赖：返回 { resolved, added }
+      function resolveDeps(ids) {
+        var result = ids.slice();
+        var added = [];
+        var changed = true;
+        while (changed) {
+          changed = false;
+          for (var i = 0; i < result.length; i++) {
+            var mod = moduleMap[result[i]];
+            if (!mod) continue;
+            for (var j = 0; j < mod.deps.length; j++) {
+              var dep = mod.deps[j];
+              if (result.indexOf(dep) === -1) {
+                result.push(dep);
+                added.push({ parent: result[i], dep: dep });
+                changed = true;
+              }
+            }
+          }
+        }
+        return { resolved: result, added: added };
+      }
+
+      // 按分类顺序排序：system → devtools → apps → keyd → env
+      function sortIds(ids) {
+        return ids.sort(function (a, b) {
+          var ca = CATEGORY_ORDER.indexOf(moduleMap[a].category);
+          var cb = CATEGORY_ORDER.indexOf(moduleMap[b].category);
+          if (ca !== cb) return ca - cb;
+          return a < b ? -1 : a > b ? 1 : 0;
+        });
+      }
+
+      function funcName(id) {
+        return "func_" + id.replace(/-/g, "_");
+      }
+
+      function indent(text, n) {
+        var pad = new Array(n + 1).join(" ");
+        return text
+          .split("\n")
+          .map(function (l) { return l.length ? pad + l : l; })
+          .join("\n");
+      }
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      // 简单着色：注释行（# 开头）置灰
+      function highlight(code) {
+        return escapeHtml(code)
+          .split("\n")
+          .map(function (line) {
+            if (/^\s*#/.test(line)) {
+              return '<span class="hl-comment">' + line + "</span>";
+            }
+            return line;
+          })
+          .join("\n");
+      }
+
+      function generate(ids) {
+        var r = resolveDeps(ids);
+        var sorted = sortIds(r.resolved);
+
+        var funcs = sorted
+          .map(function (id) {
+            var mod = moduleMap[id];
+            var body = indent(mod.script.replace(/\s+$/, ""), 4);
+            return funcName(id) + "() {\n" + body + "\n}";
+          })
+          .join("\n\n");
+
+        var calls = sorted.map(funcName).join("\n");
+
+        return (
+          commonHeader +
+          "\n\n# ==================== 功能函数 ====================\n\n" +
+          funcs +
+          "\n\n# ==================== 执行 ====================\n\n" +
+          'check_sudo\nprint_banner "Fedora 开发环境初始化（按需生成）"\n\n' +
+          calls +
+          '\n\nprint_banner "Fedora 开发环境初始化完成！"\n' +
+          "print_warning \"请执行 'source ~/.bashrc' 使环境变量生效\"\n"
+        );
+      }
+
+      function showToast(msg) {
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.remove("opacity-0", "translate-y-2");
+        toast.classList.add("opacity-100", "translate-y-0");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toast.classList.add("opacity-0", "translate-y-2");
+          toast.classList.remove("opacity-100", "translate-y-0");
+        }, 2500);
+      }
+
+      function updateDepMessage(added) {
+        if (!added.length) {
+          depMsg.classList.add("hidden");
+          depMsg.innerHTML = "";
+          return;
+        }
+        var items = added.map(function (a) {
+          return (
+            "<b>" + escapeHtml(moduleMap[a.parent].name) + "</b> 依赖 <b>" +
+            escapeHtml(moduleMap[a.dep].name) + "</b>，已自动补充"
+          );
+        });
+        depMsg.innerHTML =
+          '<span class="font-medium">依赖提示：</span>' + items.join("；");
+        depMsg.classList.remove("hidden");
+      }
+
+      function setCardState(input, checked) {
+        var label = input.closest("[data-module-card]");
+        if (label) {
+          label.classList.toggle("border-accent", checked);
+          label.classList.toggle("bg-accent/10", checked);
+        }
+      }
+
+      function regenerate() {
+        var ids = getChecked();
+        var r = resolveDeps(ids);
+        var sorted = sortIds(r.resolved);
+
+        if (countEl) {
+          var txt = "已选 " + ids.length + " 项";
+          if (r.added.length) {
+            txt += "（自动补充 " + r.added.length + " 项依赖）";
+          }
+          countEl.textContent = txt;
+        }
+
+        if (sorted.length === 0) {
+          rawScript = "# 请在左侧勾选所需模块以生成脚本\n";
+          preview.innerHTML =
+            '<span class="hl-comment">' +
+            escapeHtml(rawScript.replace(/\n$/, "")) +
+            "</span>";
+          updateDepMessage([]);
+          return;
+        }
+
+        rawScript = generate(ids);
+        preview.innerHTML = highlight(rawScript);
+        updateDepMessage(r.added);
+      }
+
+      // checkbox 变化
+      tool.addEventListener("change", function (e) {
+        var input = e.target;
+        if (!input || !input.hasAttribute || !input.hasAttribute("data-module-id")) return;
+        setCardState(input, input.checked);
+        regenerate();
+      });
+
+      // 快捷按钮 / 复制 / 下载
+      tool.addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        var action = btn.getAttribute("data-action");
+        var allInputs = tool.querySelectorAll("input[data-module-id]");
+
+        if (action === "select-all") {
+          for (var i = 0; i < allInputs.length; i++) {
+            allInputs[i].checked = true;
+            setCardState(allInputs[i], true);
+          }
+          regenerate();
+          showToast("已全选 " + allInputs.length + " 个模块");
+        } else if (action === "clear") {
+          for (var i = 0; i < allInputs.length; i++) {
+            allInputs[i].checked = false;
+            setCardState(allInputs[i], false);
+          }
+          regenerate();
+          showToast("已清空选择");
+        } else if (action === "recommend") {
+          for (var i = 0; i < allInputs.length; i++) {
+            var id = allInputs[i].getAttribute("data-module-id");
+            var on = RECOMMENDED.indexOf(id) !== -1;
+            allInputs[i].checked = on;
+            setCardState(allInputs[i], on);
+          }
+          regenerate();
+          showToast("已应用推荐配置");
+        } else if (action === "copy") {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+              .writeText(rawScript)
+              .then(function () { showToast("脚本已复制到剪贴板"); })
+              .catch(function () { showToast("复制失败，请手动复制"); });
+          } else {
+            showToast("当前浏览器不支持自动复制");
+          }
+        } else if (action === "download") {
+          var blob = new Blob([rawScript], {
+            type: "text/x-shellscript;charset=utf-8"
+          });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "fedora-init.sh";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+          showToast("脚本已开始下载");
+        }
+      });
+
+      regenerate();
+    }
+
+    // 直接初始化：is:inline 脚本在每次页面加载（含 view transition）后执行，
+    // 此时 DOM 已就绪。不挂 astro:page-load 监听以避免监听器累积。
+    init();
+  })();
+</script>
+
+<style is:global>
+  #script-preview .hl-comment {
+    color: var(--color-muted-foreground);
+    font-style: italic;
+  }
+</style>
