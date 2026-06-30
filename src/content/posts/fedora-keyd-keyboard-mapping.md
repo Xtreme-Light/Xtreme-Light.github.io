@@ -193,6 +193,41 @@ sudo keyd monitor
 
 A: 执行 `sudo keyd reload` 或 `sudo systemctl restart keyd`。
 
+### Q: 执行 `keyd` 命令时报错 "command not found"？
+
+A: 这是一个比较隐蔽的问题。find 命令找不到 keyd 可执行文件，但服务文件显示执行的是 `/usr/bin/keyd.rvaiya`。这说明 keyd 的可执行文件名不是 `keyd`，而是 `keyd.rvaiya`。
+
+**第一步：确认 keyd.rvaiya 的存在及其功能**
+
+首先，确保 `keyd.rvaiya` 文件存在并且有执行权限：
+
+```bash
+ls -la /usr/bin/keyd.rvaiya
+```
+
+然后，直接使用这个实际的可执行文件名来测试重载命令：
+
+```bash
+sudo /usr/bin/keyd.rvaiya reload
+```
+
+如果这个命令执行成功（没有报错），说明 keyd 的核心功能正常，只是缺少 `keyd` 这个命令名。
+
+**第二步：创建 keyd 软链接（推荐）**
+
+为了以后能方便地使用 `keyd` 命令，创建一个指向 `keyd.rvaiya` 的软链接：
+
+```bash
+sudo ln -s /usr/bin/keyd.rvaiya /usr/bin/keyd
+```
+
+创建完成后，验证一下：
+
+```bash
+ls -la /usr/bin/keyd
+sudo keyd reload
+```
+
 ## 进阶技巧
 
 ### 自定义超时时间
